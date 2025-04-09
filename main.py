@@ -2,6 +2,10 @@ import math
 import numpy as np
 import pandas as pd
 
+# ======= MAX VALUES =========
+X_MIN, X_MAX = 16, 40
+W_MIN, W_MAX = 0, 100
+
 # ======== MODEL FUNCTIONS =========
 def membership(x_j, a_ij, b_ij):
     # return math.exp(- ((x_j - a_ij) / b_ij) ** 2)
@@ -58,7 +62,21 @@ def entrenar(reglas, wi, data, ka=0.1, kb=0.1, kw=0.1, epocas=1000):
 # ======== INFERENCE =========
 def inferir(x_1, reglas, wi):
     membership_values = [membership(x_1, r[0], r[1]) for r in reglas]
+
+    # Debug print
+    # print(f"Pertenencia -> Baja: {membership_values[0]}%, Media: {membership_values[1]}%, Alta: {membership_values[2]}%")
+
     return yf(membership_values, wi)
+
+# ======== SCALE ========
+def scale_x(x):
+    return (x - X_MIN) / (X_MAX - X_MIN)
+
+def scale_w(w):
+    return (w - W_MIN) / (W_MAX - W_MIN)
+
+def unscale_w(w):
+    return w * (W_MAX -W_MIN) + W_MIN
 
 # ======== MAIN =========
 if __name__ == '__main__':
@@ -88,13 +106,16 @@ if __name__ == '__main__':
     #     (40, 80)
     # ]
 
-    data = pd.read_csv("datos_entrenamiento.csv").values.tolist()
+    data = pd.read_csv("test/datos_entrenamiento_16_40.csv").values.tolist()
+
+    # Normalize data
+    data = [ (scale_x(x), scale_w(w)) for x, w in data]
 
     # Initialize Rules
     reglas = [
-        [20, 8, 25],
-        [28, 8, 50],
-        [36, 8, 75]
+        [20, 15, 25],
+        [28, 15, 50],
+        [36, 15, 75]
     ]
     wi = [r[2] for r in reglas]
 
@@ -114,6 +135,7 @@ if __name__ == '__main__':
         try:
             x = float(entrada)
             salida = inferir(x, reglas, wi)
+            # salida = unscale_w(salida)
             print(f"Salida inferida: {salida:.2f}% ventilador")
         except ValueError:
             print("Por favor ingresa un número válido.")
